@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WebSocket Word Cloud Test</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input { padding: 8px; font-size: 16px; }
+    button { padding: 8px 12px; font-size: 16px; margin-left: 8px; }
+    h1, h2 { margin-top: 30px; }
+    .cloud, .history { margin-top: 20px; }
+    .cloud li, .history li {
+      display: inline-block;
+      margin: 5px;
+      padding: 10px;
+      background: #eef;
+      border-radius: 8px;
+    }
+    .history li {
+      background: #ddd;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🧪 WebSocket Word Cloud Tester</h1>
+
+  <input type="text" id="wordInput" placeholder="Type a word" />
+  <button onclick="sendWord()">Send</button>
+
+  <h2>☁️ Word Cloud</h2>
+  <ul id="wordList" class="cloud"></ul>
+
+  <h2>🕘 Word History</h2>
+  <ul id="historyList" class="history"></ul>
+
+  <script>
+    const ws = new WebSocket("ws://localhost:10000");
+
+    ws.onopen = () => {
+      console.log("✅ Connected to WebSocket server");
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "init") {
+          data.words.forEach(word => {
+            addWord(word);
+            addHistory(word);
+          });
+        } else if (data.type === "new-word") {
+          addWord(data.word);
+          addHistory(data.word);
+        }
+      } catch (e) {
+        console.error("❌ Failed to parse message:", e);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
+
+    function sendWord() {
+      const input = document.getElementById("wordInput");
+      const word = input.value.trim();
+      if (!word) return;
+
+      const message = {
+        type: "new-word",
+        word: word
+      };
+
+      ws.send(JSON.stringify(message));
+      input.value = "";
+    }
+
+    function addWord(word) {
+      const ul = document.getElementById("wordList");
+      const li = document.createElement("li");
+      li.textContent = word;
+      ul.appendChild(li);
+    }
+
+    function addHistory(word) {
+      const ul = document.getElementById("historyList");
+      const li = document.createElement("li");
+      li.textContent = `${new Date().toLocaleTimeString()} - ${word}`;
+      ul.appendChild(li);
+    }
+  </script>
+
+</body>
+</html>
