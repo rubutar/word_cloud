@@ -36,7 +36,7 @@
   <ul id="historyList" class="history"></ul>
 
   <script>
-    const ws = new WebSocket("ws://localhost:10000");
+    const ws = new WebSocket("wss://word-cloud-7n9n.onrender.com");
 
     ws.onopen = () => {
       console.log("✅ Connected to WebSocket server");

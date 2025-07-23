@@ -10,10 +10,11 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 let words = [];
+let feedbacks = [];
 
 wss.on('connection', (ws) => {
 	//Send current words
-	ws.send(JSON.stringify({ type: 'init', words }));
+	ws.send(JSON.stringify({ type: 'init', words, feedbacks }));
 
 	ws.on('message', (message) => {
 		const data = JSON.parse(message);
@@ -26,6 +27,15 @@ wss.on('connection', (ws) => {
 					client.send(JSON.stringify({ type: 'new-word', word: data.word }));
 				}
 			});
+		} else {
+			feedbacks.push({ name: data.name, feedback: data.word });
+
+
+			wss.clients.forEach((client) => {
+				if (client.readyState === WebSocket.OPEN) {
+					client.send(JSON.stringify({ type: 'feedback', "name": data.name, "word": data.word }));
+				}
+			})
 		}
 	});
 });
