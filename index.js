@@ -10,6 +10,7 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 let words = [];
+let chats = [];
 let feedbacks = [];
 
 wss.on('connection', (ws) => {
@@ -20,20 +21,26 @@ wss.on('connection', (ws) => {
 		const data = JSON.parse(message);
 		if (data.type === 'new-word') {
 			words.push(data.word);
-
-			//Broadcast new word to all clients
 			wss.clients.forEach((client) => {
 				if (client.readyState === WebSocket.OPEN) {
 					client.send(JSON.stringify({ type: 'new-word', word: data.word }));
 				}
 			});
-		} else {
-			feedbacks.push({ name: data.name, feedback: data.word });
-
+		} else if (data.type === 'group-chat') {
+			chats.push({ name: data.name, chats: data.word });
 
 			wss.clients.forEach((client) => {
 				if (client.readyState === WebSocket.OPEN) {
-					client.send(JSON.stringify({ type: 'feedback', "name": data.name, "word": data.word }));
+					client.send(JSON.stringify({ type: 'group-chat', name: data.name, chat: data.word }));
+				}
+			})
+
+		} else {
+			feedbacks.push({ name: data.name, feedback: data.word });
+
+			wss.clients.forEach((client) => {
+				if (client.readyState === WebSocket.OPEN) {
+					client.send(JSON.stringify({ type: 'feedback', name: data.name, word: data.word }));
 				}
 			})
 		}
