@@ -11,35 +11,29 @@ const wss = new WebSocket.Server({ server });
 
 let words = [];
 let feedbacks = [];
-let chats = [];
 
 wss.on('connection', (ws) => {
-	ws.send(JSON.stringify({ type: 'init', words, chats, feedbacks }));
+	//Send current words
+	ws.send(JSON.stringify({ type: 'init', words, feedbacks }));
 
 	ws.on('message', (message) => {
 		const data = JSON.parse(message);
 		if (data.type === 'new-word') {
 			words.push(data.word);
 
+			//Broadcast new word to all clients
 			wss.clients.forEach((client) => {
 				if (client.readyState === WebSocket.OPEN) {
-					client.send(JSON.stringify({ type: 'new-word', name: data.name, word: data.word }));
+					client.send(JSON.stringify({ type: 'new-word', word: data.word }));
 				}
 			});
-		} else if (data.type === 'group-chat') {
-			chats.push({ name: data.name, chat: data.word });
-
-			wss.clients.forEach((client) => {
-				if (client.readyState === WebSocket.OPEN) {
-					client.send(JSON.stringify({ type: 'group-chat', name: data.name, chat: data.word }));
-				}
-			})
 		} else {
 			feedbacks.push({ name: data.name, feedback: data.word });
 
+
 			wss.clients.forEach((client) => {
 				if (client.readyState === WebSocket.OPEN) {
-					client.send(JSON.stringify({ type: 'feedback', name: data.name, feedback: data.word }));
+					client.send(JSON.stringify({ type: 'feedback', "name": data.name, "word": data.word }));
 				}
 			})
 		}
